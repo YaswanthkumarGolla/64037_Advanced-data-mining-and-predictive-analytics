@@ -1,0 +1,103 @@
+---
+title: "ADM_Assignment1"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "2024-03-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Part-B
+
+#This part of the assignment involves building generalized linear regression models to answer a number of questions. We will use the Carseats dataset that is part of the ISLR package (you need to install and load the library). We may also need the following packages: caret, dplyr and glmnet.
+
+#Loaded the libraries.
+
+```{r}
+library(caret)
+library(glmnet)
+library(dplyr)
+library(ISLR)
+```
+
+#Load the Carseats dataset
+```{r}
+Dataset <- Carseats
+```
+
+# Selecting required columns for CarSeats Dataset
+```{r}
+Carseats_Filtered <- Carseats %>% select("Sales","Price","Population","Age","Advertising","Income","Education")
+```
+
+# Q1.  Build a Lasso regression model to predict Sales based on all other attributes ("Price","Advertising", "Population", "Age", "Income" and "Education"). What is the best value of lambda for such a lasso model? (Hint1: Do not forget to scale your input attributes – you can use the caret preprocess() function to scale and center the data. Hint 2: glment library expect the input attributes to be in the matrix format. You can use the as.matrix() function for converting).
+```{r}
+X <- as.matrix(Carseats[, c("Price", "Advertising", "Population", "Age", "Income", "Education")])
+y <- Carseats$Sales
+
+Carseats_scale <- preProcess(Carseats, method = c("scale", "center"))
+Carseats_predicting<- predict(Carseats_scale, Carseats)
+summary(Carseats_predicting)
+
+# Scale and center the data using caret
+scale_data <- preProcess(X, method = c("center", "scale"))
+X_scale <- scale_data$`scale:center`
+
+# Create a Lasso regression model using glmnet
+Lasso_model <- cv.glmnet(X, y, alpha = 1)
+
+# Plot the cross-validated mean squared error (optional)
+plot(Lasso_model)
+
+# Find the best value of lambda
+best_Lambda <- Lasso_model$lambda.min
+cat("Best Lambda Value:", best_Lambda, "\n")
+
+
+# Fit the final Lasso model with the best lambda
+Lasso_model <- glmnet(X, y, alpha = 1, lambda = best_Lambda)
+
+# Print the coefficients
+coefficients(Lasso_model)
+
+# The best value of lambda is :- 0.004305309
+```
+
+# Q2. What is the coefficient for the price (normalized) attribute in the best model (i.e. model with the optimal lambda)?
+```{r}
+#finding the coefficient for the price of final lasso model
+price_coefficient <- coef(Lasso_model, s = best_Lambda)
+print(price_coefficient)
+#The coefficient for the price is:- -0.05713807
+```
+# Q3. How many attributes remain in the model if lambda is set to 0.01? How that number changes if lambda is increased to 0.1? Do you expect more variables to stay in the model (i.e., to have non-zero coefficients) as we increase lambda?
+```{r}
+# View the coefficients at different lambda values
+print(coefficients(Lasso_model, s=0.01))
+print(coefficients(Lasso_model, s=0.1))
+
+# Plot the coefficients as a function of lambda
+plot(Lasso_model)
+
+#After the comparison between changing the lambda(0.01,0.1) value shows that all the attributes remains constant  in the model, even after changing the lambda values.
+```
+
+#Q4.Build an elastic-net model with alpha set to 0.6. What is the best value of lambda for such a model?
+```{r}
+# Build Elastic Net model with alpha = 0.6
+Elastic_net_model <- cv.glmnet(X, y, alpha = 0.6)
+
+# Plot the cross-validated mean squared error (optional)
+plot(Elastic_net_model)
+
+# Find the best value of lambda
+best_lambda_Elastic_net <- Elastic_net_model$lambda.min
+cat("Best lambda value for Elastic Net model with alpha = 0.6:", best_lambda_Elastic_net, "\n")
+
+#The best value for Elastic_net_model with alpha 0.6 is:- 0.006538062
+
+```

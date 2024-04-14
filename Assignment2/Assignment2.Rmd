@@ -1,0 +1,58 @@
+---
+title: "ADM_Assignment 2"
+output:
+  word_document: default
+  html_document: default
+date: "2024-04-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Importing the libraries.
+```{r}
+library(ISLR)
+library(glmnet)
+library(caret)
+library(dplyr)
+library(rpart)
+library(randomForest)
+```
+
+# Loading the required attributes from ISLR Car DataSet.
+```{r}
+Car_Seats <- Carseats %>% select("Sales", "Price", "Advertising","Population","Age","Income","Education")
+```
+
+#QB1. Build a decision tree regression model to predict Sales based on all other attributes("Price", "Advertising", "Population", "Age", "Income" and "Education"). Which attribute is used at the top of the tree (the root node) for splitting? Hint: you can either plot () and text()functions or use the summary() function to see the decision tree rules.
+```{r}
+Model<- rpart(Sales~., data = Car_Seats, method = "anova")
+print(Model)
+```
+
+#QB2. Consider the following input: Sales=9, Price=6.54, Population=124, Advertising=0, Age=76, Income= 110, Education=10 What will be the estimated Sales for this record using the decision tree model?
+
+```{r}
+New_Car_Seats<- data.frame("Sales" = 9, "Price" = 6.54, "Population" = 124, "Advertising" = 0, "Age" = 76, "Income" = 110, "Education" = 10)
+Model_1<- predict(Model, New_Car_Seats, method = "anova")
+Model_1
+```
+# The estimated sales value for this record is 9.58625.
+
+#QB3. Use the caret function to train a random forest (method=’rf’) for the same dataset. Use the caret default settings. By default, caret will examine the “mtry” values of 2,4, and 6. Recall that mtry is the number of attributes available for splitting at each splitting node.Which mtry value gives the best performance?(Make sure to set the random number generator seed to 123)
+```{r}
+set.seed(123)
+Model_2<- train(Sales~.,data=Car_Seats, method= "rf")
+print(Model_2)
+```
+# The value for the model mtry=rf is 2 as RMSE is 2.405819
+
+#QB4. Customize the search grid by checking the model’s performance for mtry values of 2, 3 and 5 using 3 repeats of 5-fold cross validation.
+```{r}
+set.seed(123)
+Model_3 <- trainControl(method = "repeatedcv", number = 5, repeats = 3,search = "grid")
+Model_4 <- train(Sales~., data = Car_Seats, method = "rf",trControl = Model_3,tuneGrid = expand.grid(mtry=c(2,3,5)))
+Model_4
+```
+# The value for the model mtry=rf is 2,3,5 as RMSE is 2.405235
